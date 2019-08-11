@@ -75,14 +75,16 @@
         this.y  = this.checkCoordY(this.y);
       }
       checkCoordX(coordX) {
-        if(coordX < 0) return 2;
-        const max = (this.getMatrixWidth() - 2) * 10
+        const min = 0;
+        const max = (this.getMatrixWidth() - 1) * 10;
+        if(coordX < min) return min*3;
         if(coordX > max) return max;
         return coordX;
       }
       checkCoordY(coordY) {
-        if(coordY < 0) return 2;
-        const max = (this.getMatrixHeight() - 2) * 10
+        const min = 0
+        const max = (this.getMatrixHeight() - 1) * 10;
+        if(coordY < min) return min;
         if(coordY > max) return max;
         return coordY;
       }
