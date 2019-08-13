@@ -1,7 +1,8 @@
+import Base from './base';
 import lib from './library';
 
 "use strict"
-class Dot {
+class Dot extends Base{
   #matrix = [[0]];
   #coords = {x: 0, y: 0};
   #direction = {x: 0, y: 0};
@@ -10,6 +11,7 @@ class Dot {
   #buffer = {};
   _name = 'unnamed';
   constructor(arg = {}) {
+    super();
     const props = {
       x: this.x,
       y: this.y,
@@ -136,10 +138,5 @@ class Dot {
   getMatrixWidth() { return this.#matrix[0].length;}
   getMatrixHeight() { return this.#matrix.length;}
   getMatrixCell(arg) { return this.#matrix[arg.y][arg.x];}
-
-  // Self
-  log(){
-    console.table(this);
-  }
 }
 export default Dot;

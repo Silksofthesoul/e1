@@ -1,13 +1,14 @@
-import lib from './library';
+import Base from './base';
 
 'use strict';
-class Scene {
+class Scene extends Base{
   #id = 'scene';
   #class = 'scene';
   #data = null;
   #colors = null;
   #element = null;
   constructor(arg = {}) {
+    super();
     const props = {
       id: arg.id || this.#id,
       class: arg.class || this.#class,
@@ -29,8 +30,15 @@ class Scene {
       let el = document.createElement('div');
       el.classList.add('cell');
       return el;
-  };
-
+  }
+  erase () {
+    let counter = 0;
+    while(this.#element.children[counter]){
+      this.#element.children[counter]
+      .style.backgroundColor = this.#colors[0];
+      counter++;
+    }
+  }
   // render
   render () {
       let counter = 0;
@@ -47,11 +55,6 @@ class Scene {
               counter++;
           });
       });
-  }
-
-  // Self
-  log() {
-    console.table(this);
   }
 }
 export default Scene;

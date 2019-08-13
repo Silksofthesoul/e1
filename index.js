@@ -1,18 +1,18 @@
 import Dot from './dot';
 import Scene from './scene';
-import lib from './library';
+import Data from './data';
+import UI from './ui';
+
 "use strict"
 !(() => {
     const obj = {
         isRun: true,
+        isPause: false,
         loopTimeout: 100,
         loopTimer: null,
-        data: [],
-        dataWidth: 64,
-        dataHeight: 64,
+        data: null,
         scene: null,
         cellSize: 10,
-        mutations: [],
         colors: ['rgb(255, 255, 255)']
     };
 
@@ -31,10 +31,54 @@ import lib from './library';
               padding: 0;
               margin: 0;
             }
+            #mainElement{
+              width:100px;
+              height:100px;
+              --background-color: rgba(255,0,0,0.3);
+              position: fixed;
+              top: ${obj.cellSize}px;
+              left: ${obj.cellSize}px;
+            }
+            #isPaint{
+            }
+            #Clear{
+            }
+            .button.active{
+              background-color: rgba(255,255,127,1);
+            }
+            .button{
+              transition: background-color 0.25s 0s ease-out,
+                          color 0.15s 0s ease-out;
+                          box-shadow 0.25s 0s ease-out;
+              background-color: rgba(255,255,255,1);
+              text-align: center;
+              cursor: pointer;
+              margin-bottom:0.5em;
+              border-radius: 2em;
+              padding: 0.5em 0.15em;
+              box-shadow: 0px 0px 3px 0px rgba(0,0,0,0.8),
+                          0px 0px 10px 0px rgba(0,0,0,0.5);
+            }
+            .button:hover,
+            .button:active,
+            .button:focus{
+              background-color: rgba(64,64,64,1);
+              color: white;
+              box-shadow: 0px 0px 1px 0px rgba(0,0,0,0.6),
+                          0px 0px 5px 0px rgba(0,0,0,0.3);
+            }
+            .button.active:hover,
+            .button.active:active,
+            .button.active:focus{
+              background-color: rgba(127,127,64,1);
+              color: white;
+              box-shadow: 0px 0px 1px 0px rgba(0, 0, 64, 0.6),
+                          0px 0px 5px 0px rgba(0, 0, 64, 0.3);
+            }
             .scene{
               background-color: rgba(255,255,255,1);
-              width: ${obj.dataWidth * obj.cellSize}px;
-              height: ${obj.dataHeight * obj.cellSize}px;
+              width: ${obj.data.width * obj.cellSize}px;
+              height: ${obj.data.height * obj.cellSize}px;
               display: flex;
               justify-content: flex-start;
               flex-direction: row;
@@ -54,85 +98,60 @@ import lib from './library';
             .replace(/\s{2,}/igm,' ');
         document.head.appendChild(el);
     };
-
-    obj.createScene = () => {
-        obj.scene = new Scene({
-          data: obj.data,
-          colors: obj.colors
-        });
-        document.body.appendChild(obj.scene.element);
+    obj.switchPause = () => {
+      obj.isPause = !obj.isPause;
     };
-
-    obj.initData = () => {
-        for(let y =0; y<obj.dataHeight; y++){
-            obj.data.push([]);
-            for(let x =0; x<obj.dataWidth; x++){
-                obj.data[y].push(0);
-                obj.scene.element.appendChild(obj.scene.createCell());
-            }
-        }
-    };
-
-    obj.addMutate = (mutant) => {
-        obj.mutations.push(mutant);
-    };
-
     obj.init = () => {
-        obj.dataWidth = parseInt(Math.floor((window.innerWidth / obj.cellSize) - 3));
-        obj.dataHeight = parseInt(Math.floor((window.innerHeight / obj.cellSize) - 3));
-        document.body.innerHTML = '';
-        document.head.innerHTML = '';
-
-        obj.addStyles();
-        obj.createScene();
-        obj.initData();
-        const colors = [
-          'rgba(10, 75, 115, 1)',
-          'rgba(7, 42, 64, 1)',
-          'rgba(17, 160, 217, 1)',
-          'rgba(82, 197, 242, 1)',
-          'rgba(160, 219, 242, 1)',
-        ];
-        colors.forEach((item, i) => {
-          obj.colors.push(item);
-          obj.addMutate(
-            new Dot({
-              name: `Dot${i}-Type${i + 1}`,
-              type: i + 1,
-              speed: 1,
-              x: 200,
-              y: 200,
-              dx: 1,
-              dy: -1,
-              matrix: obj.data
-            })
-          );
-        });
-    };
-
-    obj.mutatate = () => {
-      for(let mutation of obj.mutations) {
-          let [oldCoords, x, y] = [{...mutation.coordsVirtual}, null, null];
-          let oldVal = obj.data[oldCoords.y][oldCoords.x];
-          mutation.step();
-          y = mutation.yVirtual;
-          x = mutation.xVirtual;
-
-          obj.data[y][x] = mutation.type;
-          if(obj.data[y][x] === oldVal){
-            // obj.data[oldCoords.y][oldCoords.x] = 0;
-          }
-      }
+      // obj.ui.log();
+      obj.data = new Data({
+        cellSize: obj.cellSize
+      });
+      obj.scene = new Scene({
+        data: obj.data.data,
+        colors: obj.colors
+      });
+      obj.ui = new UI({
+        main: obj,
+        scene: obj.scene,
+        data: obj.data,
+      });
+      obj.data.data.forEach(itemY=>itemY.forEach(itemX => obj.scene.element.appendChild(obj.scene.createCell())));
+      document.body.appendChild(obj.scene.element);
+      obj.addStyles();
+      const colors = [
+        'rgba(10, 75, 115, 1)',
+        'rgba(7, 42, 64, 1)',
+        'rgba(17, 160, 217, 1)',
+        'rgba(82, 197, 242, 1)',
+        'rgba(160, 219, 242, 1)',
+      ];
+      colors.forEach((item, i) => {
+        obj.colors.push(item);
+        obj.data.addMutate(
+          new Dot({
+            name: `Dot${i}-Type${i + 1}`,
+            type: i + 1,
+            speed: 1,
+            x: 200,
+            y: 200,
+            dx: 1,
+            dy: -1,
+            matrix: obj.data.data
+          })
+        );
+      });
     };
 
     obj.loop = () => {
-        obj.mutatate();
+      if(!obj.isPause){
+        obj.data.mutatate();
         obj.scene.render();
-        if(obj.isRun){
-            obj.loopTimer = requestAnimationFrame(obj.loop);
-        }else{
-            cancelAnimationFrame(obj.loopTimer);
-        }
+      }
+      if(obj.isRun){
+          obj.loopTimer = requestAnimationFrame(obj.loop);
+      }else{
+          cancelAnimationFrame(obj.loopTimer);
+      }
     };
 
     obj.run = () => {
