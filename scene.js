@@ -24,6 +24,7 @@ class Scene extends Base{
     this.#colors = props.colors;
   }
 
+  set colors(newColors) { this.#colors = newColors; }
   // Element
   get element() { return this.#element; }
   createCell () {

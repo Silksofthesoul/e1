@@ -82,41 +82,75 @@ class Dot extends Base{
   }
 
   step() {
-    let [mutateX, mutateY, mutateSpeed] = [lib.RMXI(-2, 2), lib.RMXI(-2, 2), lib.RMXI(-5, 5) / lib.RMXI(10, 100)];
-    let maxMatrixX = (this.getMatrixWidth() - 3) * 10;
-    let maxMatrixY = (this.getMatrixHeight() -  3) * 10;
+    let [
+      mutateX,
+      mutateY,
+      mutateSpeed] = [
+        lib.RMXI(-2, 2),
+        lib.RMXI(-2, 2),
+        lib.RMXI(-5, 5) / lib.RMXI(10, 100)
+      ];
+    let q = 3;
+    let cellSize = 10;
+    let minMatrixX = q * cellSize;
+    let minMatrixY = q * cellSize;
+    let maxMatrixX = (this.getMatrixWidth() - q) * cellSize;
+    let maxMatrixY = (this.getMatrixHeight() -  q) * cellSize;
     let isTouched = false;
+    let currentStep = { x: 0, y: 0 };
+
+
     const step = (key, mutate) => {
+      let modD = Math.max(Math.abs(this.dx), Math.abs(this.dy));
+      let qf = parseInt('1' + '0'.repeat(String(modD).length));
       if(this.#buffer.isSpeedForward === undefined) this.#buffer.isSpeedForward = true;
-      if(this.#buffer.isSpeedForward)this.speed += 0.01;
-      else this.speed -= 0.01;
-      if(this.speed > 20) this.#buffer.isSpeedForward = false;
+      if(this.#buffer.isSpeedForward)this.speed += 1 / (qf /100);
+      else this.speed -= 1 / (qf / 100);
+      if(this.speed > qf) this.#buffer.isSpeedForward = false;
       if(this.speed < 1) this.#buffer.isSpeedForward = true;
-      this[key] += ((this[`d${key}`] + mutate) * parseInt(Math.floor(this.speed)));
+      currentStep[key] = (((this[`d${key}`] / qf) + mutate) * parseInt(Math.floor(this.speed)));
+      this[key] += currentStep[key];
     }
     const changeDX = () => {
       isTouched = true;
       this.speed += mutateSpeed;
-      this.dx = -this.dx;
+      this.dx = -this.dx + (mutateX * 100);
+      if(this.dx < -360) this.dx = -360;
+      if(this.dx > 360) this.dx = 360;
+      if(this.dy === 0){
+        this.dy = lib.RMXI(-1, 1);
+      }
       step('x', mutateX);
     };
     const changeDY = () => {
       isTouched = true;
       this.speed += mutateSpeed;
-      this.dy = -this.dy;
+      this.dy = -this.dy + (mutateY * 100);
+      if(this.dy < -360) this.dy = -360;
+      if(this.dy > 360) this.dy = 360;
+      if(this.dx === 0) {
+        this.dx = lib.RMXI(-1, 1);
+      }
       step('y', mutateY);
     };
-
-    if(this.x < 3 || this.x > maxMatrixX) {
-      if(this.x < 3) {this.x = 3}
-      if(this.x > maxMatrixX) {this.x = maxMatrixX}
-      changeDX();
-    }
-    if(this.y < 3 || this.y > maxMatrixY) {
-      if(this.y < 3) {this.y = 3}
-      if(this.y > maxMatrixY) {this.y = maxMatrixY}
-      changeDY();
-    }
+    const checkAndChangeX = () => {
+      if(this.x < minMatrixX || this.x > maxMatrixX) {
+        if(this.x < minMatrixX) {this.x = minMatrixX}
+        if(this.x > maxMatrixX) {this.x = maxMatrixX + currentStep.x}
+        return true;
+      }
+      return false;
+    };
+    const checkAndChangeY = () => {
+      if(this.y < minMatrixY || this.y > maxMatrixY) {
+        if(this.y < minMatrixY) {this.y = minMatrixY}
+        if(this.y > maxMatrixY) {this.y = maxMatrixY + currentStep.y}
+        return true;
+      }
+      return false;
+    };
+    if(checkAndChangeX()) changeDX();
+    if(checkAndChangeY()) changeDY();
 
     if(!isTouched){
       step('x', 0);

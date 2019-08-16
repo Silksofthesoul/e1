@@ -1,4 +1,5 @@
 import Base from './base';
+import lib from './library';
 
 'use strict';
 
@@ -6,11 +7,15 @@ class UI extends Base {
   #elements = [];
   #scene = null;
   #data = null;
+  #colors = null;
+  #styles = null;
   #main = null;
   constructor(arg) {
     super();
     this.#scene = arg.scene;
     this.#data = arg.data;
+    this.#colors = arg.colors;
+    this.#styles = arg.styles;
     this.#main = arg.main;
     this.createElements();
     this.addListeners();
@@ -44,6 +49,22 @@ class UI extends Base {
     pause.addEventListener('click', () => {
       this.#main.switchPause();
       pause.classList.toggle('active');
+    });
+
+    this.getElementById('RndColors')
+    .element.addEventListener('click', () => {
+      const colors = this.#colors[lib.RMXI(0, this.#colors.length - 1)];
+      this.#main.colors = colors;
+      this.#main.colors.sort((a, b)=>(Math.round(Math.random())-0.5));
+      this.#styles.setStyles({
+        backgroundColor: this.#main.colors[0],
+        width: this.#main.data.width,
+        height: this.#main.data.height,
+        cellSize: this.#main.cellSize,
+      });
+      this.#scene.erase();
+      this.#scene.colors = this.#main.colors;
+      this.#scene.erase();
     });
   }
   createElements() {
@@ -81,6 +102,13 @@ class UI extends Base {
       text: 'Pause',
       parent: this.getElementById('mainElement').element
     }, {id: 'Pause', class: 'button'});
+
+    this.createElement({
+      key: 'RndColors',
+      tag: 'div',
+      text: 'Rnd Colors',
+      parent: this.getElementById('mainElement').element
+    }, {id: 'RndColors', class: 'button'});
 
   }
 
