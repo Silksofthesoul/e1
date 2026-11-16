@@ -1,5 +1,5 @@
-import Base from './base';
-import lib from './library';
+import Base from './base.js';
+import lib from './library.js';
 
 'use strict';
 

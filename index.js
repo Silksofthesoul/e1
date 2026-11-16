@@ -1,10 +1,10 @@
-import Dot from './dot';
-import Scene from './scene';
-import Data from './data';
-import UI from './ui';
-import Styles from './styles';
-import getColors from './colors';
-import lib from './library';
+import Dot from './dot.js';
+import Scene from './scene.js';
+import Data from './data.js';
+import UI from './ui.js';
+import Styles from './styles.js';
+import getColors from './colors.js';
+import lib from './library.js';
 
 'use strict';
 !(() => {
