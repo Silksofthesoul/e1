@@ -1,4 +1,4 @@
-import Base from './base';
+import Base from './base.js';
 
 class Styles extends Base {
   constructor() {

@@ -1,4 +1,4 @@
-import Base from './base';
+import Base from './base.js';
 
 'use strict';
 class Scene extends Base{
