@@ -62,7 +62,6 @@ class UI extends Base {
         height: this.#main.data.height,
         cellSize: this.#main.cellSize,
       });
-      this.#scene.erase();
       this.#scene.colors = this.#main.colors;
       this.#scene.erase();
     });

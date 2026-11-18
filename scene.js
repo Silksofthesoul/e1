@@ -7,6 +7,8 @@ class Scene extends Base{
   #data = null;
   #colors = null;
   #element = null;
+  #cells = [];
+  #rendered = [];
   constructor(arg = {}) {
     super();
     const props = {
@@ -24,38 +26,35 @@ class Scene extends Base{
     this.#colors = props.colors;
   }
 
-  set colors(newColors) { this.#colors = newColors; }
+  set colors(newColors) {
+    this.#colors = newColors;
+    this.#rendered = [];
+  }
   // Element
   get element() { return this.#element; }
   createCell () {
       let el = document.createElement('div');
       el.classList.add('cell');
+      this.#cells.push(el);
       return el;
   }
   erase () {
-    let counter = 0;
-    while(this.#element.children[counter]){
-      this.#element.children[counter]
-      .style.backgroundColor = this.#colors[0];
-      counter++;
-    }
+    this.#cells.forEach((cell) => { cell.style.backgroundColor = this.#colors[0]; });
+    this.#rendered = this.#cells.map(() => 0);
   }
-  // render
+  // Keep cell references instead of indexing a live HTMLCollection. A frame
+  // normally changes only a few pixels; leave every other DOM style alone.
   render () {
-      let counter = 0;
-      this.#data.forEach((itemY, y) => {
-          this.#data[y].forEach((itemX, x) => {
-              let coord = this.#data[y][x];
-              this.#element.children[counter]
-              .style.backgroundColor = this.#colors[coord];
-              if(coord !== 0){
-                // this.#element.children[counter]
-                // .style.outline = '2px solid rgba(0, 0, 0, 0.4)';
-              }
-
-              counter++;
-          });
-      });
+    let index = 0;
+    for (const row of this.#data) {
+      for (const value of row) {
+        if (this.#rendered[index] !== value) {
+          this.#cells[index].style.backgroundColor = this.#colors[value];
+          this.#rendered[index] = value;
+        }
+        index++;
+      }
+    }
   }
 }
 export default Scene;

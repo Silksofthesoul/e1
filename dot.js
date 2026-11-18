@@ -82,81 +82,61 @@ class Dot extends Base{
   }
 
   step() {
-    let [
-      mutateX,
-      mutateY,
-      mutateSpeed] = [
-        lib.RMXI(-2, 2),
-        lib.RMXI(-2, 2),
-        lib.RMXI(-5, 5) / lib.RMXI(10, 100)
-      ];
-    let q = 3;
-    let cellSize = 10;
-    let minMatrixX = q * cellSize;
-    let minMatrixY = q * cellSize;
-    let maxMatrixX = (this.getMatrixWidth() - q) * cellSize;
-    let maxMatrixY = (this.getMatrixHeight() -  q) * cellSize;
-    let isTouched = false;
-    let currentStep = { x: 0, y: 0 };
-
-
-    const step = (key, mutate) => {
-      let modD = Math.max(Math.abs(this.dx), Math.abs(this.dy));
-      let qf = parseInt('1' + '0'.repeat(String(modD).length));
-      if(this.#buffer.isSpeedForward === undefined) this.#buffer.isSpeedForward = true;
-      if(this.#buffer.isSpeedForward)this.speed += 1 / (qf /100);
-      else this.speed -= 1 / (qf / 100);
-      if(this.speed > qf) this.#buffer.isSpeedForward = false;
-      if(this.speed < 1) this.#buffer.isSpeedForward = true;
-      currentStep[key] = (((this[`d${key}`] / qf) + mutate) * parseInt(Math.floor(this.speed)));
-      this[key] += currentStep[key];
-    }
-    const changeDX = () => {
-      isTouched = true;
+    const mutateX = lib.RMXI(-2, 2);
+    const mutateY = lib.RMXI(-2, 2);
+    const mutateSpeed = lib.RMXI(-5, 5) / lib.RMXI(10, 100);
+    const cellSize = 10;
+    const inset = 3 * cellSize;
+    const bounds = (size) => {
+      // A very small viewport may not have room for both margins.
+      const min = Math.min(inset, (size - 1) * cellSize / 2);
+      return { min, max: Math.max(min, (size - 3) * cellSize) };
+    };
+    const modD = Math.max(Math.abs(this.dx), Math.abs(this.dy));
+    const qf = 10 ** String(modD).length;
+    const distance = (direction) => {
+      if (this.#buffer.isSpeedForward === undefined) this.#buffer.isSpeedForward = true;
+      this.speed += (this.#buffer.isSpeedForward ? 1 : -1) / (qf / 100);
+      if (this.speed > qf) this.#buffer.isSpeedForward = false;
+      if (this.speed < 1) this.#buffer.isSpeedForward = true;
+      return direction / qf * Math.floor(this.speed);
+    };
+    // Calculate the entire displacement before touching the coordinates. The
+    // old per-axis setters clamped overshoot and lost the distance to the wall.
+    const movement = { x: distance(this.dx), y: distance(this.dy) };
+    const reflect = (key, limits, mutate) => {
+      const { min, max } = limits;
+      const position = Math.max(min, Math.min(max, this[key]));
+      const delta = movement[key];
+      if (max === min) {
+        this[key] = min;
+        return;
+      }
+      const target = position + delta;
+      const touched = delta > 0 ? target >= max : delta < 0 && target <= min;
+      if (!touched) {
+        this[key] = target;
+        return;
+      }
+      // Fold the remaining distance back into the field. This is equivalent
+      // to following the trajectory to every wall, even for several hits in
+      // one frame, and does not need an unbounded collision loop.
+      const span = max - min;
+      const period = 2 * span;
+      const phase = ((target - min) % period + period) % period;
+      this[key] = min + (phase <= span ? phase : period - phase);
+      const sign = phase === 0 ? 1 : phase === span ? -1
+        : Math.sign(delta) * (phase < span ? 1 : -1);
+      // Keep the experiment's random changes of angle, but never point back
+      // out through the wall. Mutation affects the next frame, not the hit.
+      const reflected = sign * Math.abs(this[`d${key}`]);
+      this[`d${key}`] = sign * Math.max(1, Math.min(360, Math.abs(reflected + mutate * 100)));
       this.speed += mutateSpeed;
-      this.dx = -this.dx + (mutateX * 100);
-      if(this.dx < -360) this.dx = -360;
-      if(this.dx > 360) this.dx = 360;
-      if(this.dy === 0){
-        this.dy = lib.RMXI(-1, 1);
-      }
-      step('x', mutateX);
+      const tangent = key === 'x' ? 'dy' : 'dx';
+      if (this[tangent] === 0) this[tangent] = lib.RMXI(-1, 1);
     };
-    const changeDY = () => {
-      isTouched = true;
-      this.speed += mutateSpeed;
-      this.dy = -this.dy + (mutateY * 100);
-      if(this.dy < -360) this.dy = -360;
-      if(this.dy > 360) this.dy = 360;
-      if(this.dx === 0) {
-        this.dx = lib.RMXI(-1, 1);
-      }
-      step('y', mutateY);
-    };
-    const checkAndChangeX = () => {
-      if(this.x < minMatrixX || this.x > maxMatrixX) {
-        if(this.x < minMatrixX) {this.x = minMatrixX}
-        if(this.x > maxMatrixX) {this.x = maxMatrixX + currentStep.x}
-        return true;
-      }
-      return false;
-    };
-    const checkAndChangeY = () => {
-      if(this.y < minMatrixY || this.y > maxMatrixY) {
-        if(this.y < minMatrixY) {this.y = minMatrixY}
-        if(this.y > maxMatrixY) {this.y = maxMatrixY + currentStep.y}
-        return true;
-      }
-      return false;
-    };
-    if(checkAndChangeX()) changeDX();
-    if(checkAndChangeY()) changeDY();
-
-    if(!isTouched){
-      step('x', 0);
-      step('y', 0);
-    }
-    this.checkCoords();
+    reflect('x', bounds(this.getMatrixWidth()), mutateX);
+    reflect('y', bounds(this.getMatrixHeight()), mutateY);
   }
 
   // direction

@@ -92,7 +92,6 @@ class Styles extends Base {
             width: ${arg.cellSize}px;
             height: ${arg.cellSize}px;
             outline: 1px solid rgba(127, 127, 127, 0.2);
-            transition: background-color 0.1s 0.2s ease-out;
         }
     `;
   }
